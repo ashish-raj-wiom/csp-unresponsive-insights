@@ -1,1 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSP Unresponsive Insights — MG Cohort</title>
+<style>
+  :root{
+    --bg:#0f1220; --card:#171b2e; --card2:#1e2438; --ink:#e8ebf5; --muted:#9aa3bd;
+    --line:#2b3350; --accent:#6c8cff; --accent2:#4fd1c5; --warn:#ffb454; --danger:#ff6b8a;
+    --good:#4fd1c5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}
+  .wrap{max-width:1040px;margin:0 auto;padding:40px 24px 80px}
+  header{border-bottom:1px solid var(--line);padding-bottom:24px;margin-bottom:32px}
+  .eyebrow{color:var(--accent2);font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:600}
+  h1{font-size:30px;margin:8px 0 6px;font-weight:700}
+  .sub{color:var(--muted);font-size:15px}
+  .scope{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .pill{background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--muted)}
+  .pill b{color:var(--ink)}
+  h2{font-size:21px;margin:44px 0 4px;display:flex;align-items:center;gap:10px}
+  h2 .tag{font-size:12px;font-weight:600;padding:3px 10px;border-radius:6px}
+  .tagA{background:rgba(108,140,255,.18);color:#a9bcff}
+  .tagB{background:rgba(79,209,197,.18);color:#7ee6da}
+  .lead{color:var(--muted);font-size:15px;margin:6px 0 18px;max-width:820px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:22px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .kpi .n{font-size:32px;font-weight:700}
+  .kpi .l{color:var(--muted);font-size:13px;margin-top:2px}
+  table{width:100%;border-collapse:collapse;margin:14px 0 8px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:11px 16px;font-size:14px;border-bottom:1px solid var(--line)}
+  th{background:var(--card2);color:var(--muted);font-weight:600;font-size:12px;letter-spacing:.4px;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  .bar{height:8px;border-radius:5px;background:linear-gradient(90deg,var(--accent),var(--accent2));display:inline-block;vertical-align:middle;margin-right:8px}
+  td .cnt{font-weight:700}
+  .quote{border-left:3px solid var(--accent);background:var(--card);padding:10px 16px;margin:8px 0;border-radius:0 8px 8px 0;font-size:14px;color:var(--ink)}
+  .quote .who{color:var(--accent2);font-size:12px;font-weight:600;display:block;margin-bottom:2px}
+  .themes{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  .theme{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .theme h3{margin:0 0 6px;font-size:16px;display:flex;align-items:center;gap:8px}
+  .theme .dot{width:10px;height:10px;border-radius:50%}
+  .theme p{margin:0;color:var(--muted);font-size:14px}
+  .split{background:linear-gradient(135deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .split div h4{margin:0 0 8px;font-size:15px}
+  .split .a h4{color:#a9bcff}.split .b h4{color:#7ee6da}
+  .split p{margin:0;color:var(--muted);font-size:14px}
+  .recs{counter-reset:r;margin-top:18px;padding:0;list-style:none}
+  .recs li{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px 14px 54px;margin-bottom:12px;position:relative;font-size:14.5px}
+  .recs li::before{counter-increment:r;content:counter(r);position:absolute;left:16px;top:14px;width:26px;height:26px;border-radius:8px;background:var(--accent);color:#0f1220;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px}
+  .recs li b{color:var(--ink)}
+  details.log{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:16px 0 8px;overflow:hidden}
+  details.log>summary{cursor:pointer;list-style:none;padding:14px 18px;font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:10px;user-select:none}
+  details.log>summary::-webkit-details-marker{display:none}
+  details.log>summary::before{content:"\25B8";color:var(--accent2);font-size:13px;transition:transform .2s}
+  details.log[open]>summary::before{transform:rotate(90deg)}
+  details.log>summary .badge{margin-left:auto;background:var(--card2);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}
+  .vlist{border-top:1px solid var(--line)}
+  .vitem{padding:14px 18px;border-bottom:1px solid var(--line)}
+  .vitem:last-child{border-bottom:none}
+  .vhead{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px}
+  .vname{font-weight:600;font-size:14px}
+  .vid{color:var(--muted);font-size:12px;font-family:monospace}
+  .vtag{font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:6px;background:rgba(108,140,255,.16);color:#a9bcff}
+  .vtext{color:var(--muted);font-size:13.5px;line-height:1.5}
+  footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+  @media(max-width:720px){.themes,.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">MG Program &middot; CSP Unresponsive Analysis</div>
+    <h1>MG-enrolled CSPs: why they open the app but don't act</h1>
+    <div class="sub">Calling insights from two unresponsive cohorts &mdash; CSPs enrolled in the <b>MG program</b>, calls made by Ashish Raj.</div>
+    <div class="scope">
+      <span class="pill">Filter: <b>MG program = ENROLLED</b></span>
+      <span class="pill">Caller: <b>Ashish Raj</b></span>
+      <span class="pill">Cohort A connects: <b>14</b></span>
+      <span class="pill">Cohort B connects: <b>10</b></span>
+      <span class="pill">Source: <b>CSP Unresponsive Data (1).xlsx</b></span>
+    </div>
+  </header>
 
+  <!-- COHORT A -->
+  <h2><span class="tag tagA">Cohort A</span> Opened the task &mdash; but didn't respond</h2>
+  <p class="lead">These partners engaged with the lead and then <b>chose to drop it</b>. The pattern is active filtering, not inability.</p>
+  <div class="cards">
+    <div class="kpi"><div class="n">40</div><div class="l">calls attempted</div></div>
+    <div class="kpi"><div class="n">30</div><div class="l">distinct CSPs</div></div>
+    <div class="kpi"><div class="n">14</div><div class="l">connected</div></div>
+    <div class="kpi"><div class="n">5</div><div class="l">not reachable</div></div>
+  </div>
+  <table>
+    <thead><tr><th>Reason (tag)</th><th style="width:45%">Frequency</th><th>Count</th></tr></thead>
+    <tbody>
+      <tr><td>Cherry-picking (took feasible, ignored rest)</td><td><span class="bar" style="width:120px"></span></td><td class="cnt">4</td></tr>
+      <tr><td>Do not recall the booking</td><td><span class="bar" style="width:120px"></span></td><td class="cnt">4</td></tr>
+      <tr><td>Busy on another task</td><td><span class="bar" style="width:60px"></span></td><td class="cnt">2</td></tr>
+      <tr><td>No router in hand</td><td><span class="bar" style="width:30px"></span></td><td class="cnt">1</td></tr>
+      <tr><td>Phone battery died mid-action</td><td><span class="bar" style="width:30px"></span></td><td class="cnt">1</td></tr>
+      <tr><td>"Wiom not giving good connections, not installing now"</td><td><span class="bar" style="width:30px"></span></td><td class="cnt">1</td></tr>
+      <tr><td>Decline option doesn't cover the scenario</td><td><span class="bar" style="width:30px"></span></td><td class="cnt">1</td></tr>
+    </tbody>
+  </table>
+  <div class="quote"><span class="who">Murtaza</span>"I look at the address &mdash; the ones worth installing I take, the rest I just leave."</div>
+  <div class="quote"><span class="who">Rakesh (looping-booking effect)</span>"In this area only I install, so it'll come back around to me anyway. Don't remember why I didn't pick it."</div>
+  <div class="quote"><span class="who">Sky Broadband</span>"I don't serve this area anymore &mdash; stopped 2 years ago, that's why I didn't pick it up."</div>
+
+  <details class="log">
+    <summary>See all Cohort A verbatims <span class="badge">14 calls</span></summary>
+    <div class="vlist">
+      <div class="vitem"><div class="vhead"><span class="vname">Sanjeev</span><span class="vid">a0b8z0</span><span class="vtag">Do not recall</span></div><div class="vtext">Do not recall.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Sky Broadband</span><span class="vid">a0b0n9</span><span class="vtag">Cherry-picking</span></div><div class="vtext">Iss area me mai serve nhi karta, 2 saal pehle karta tha, isliye nhi uthaya.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Sunil Shokeen</span><span class="vid">a0b9j7</span><span class="vtag">Busy on another task</span></div><div class="vtext">Mera ladka complaint resolve kar rha tha, isliye pick nhi kar paya. Phir wapis ye booking ghoom ke aayi toh abhi pick kar li hai. Booking kai baar door ki aati hai &mdash; jab customer se baat karte hain tab pata chalta hai. Lead accept karte time ye pata nahi chalta ki customer lagwayenge ya nahi.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Babloo Kumar</span><span class="vid">a0b9n2</span><span class="vtag">No router</span></div><div class="vtext">Router nhi hai mere paas, isliye install nhi kar rha hu.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Vikash Parihar</span><span class="vid">a0b9w7</span><span class="vtag">Phone battery off</span></div><div class="vtext">Booking aayi, maine dekhi, lekin click kiya toh phone switch off ho gya &mdash; battery khatm ho gyi thi.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Rakesh</span><span class="vid">a0a7a9</span><span class="vtag">Do not recall</span></div><div class="vtext">Iss area me mai hi lagata hu, toh ghoom ke wapis mere paas hi aayegi. Mujhe yaad nhi kyu nahi pick kiya. Doosra issue: installation ke time hume pata nahi hota kitna amount customer se lena hai; customer puchta hai, aur jab batate hain ki security fee bhi deni hai toh customer mana kar deta hai.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Kpawar Internet Service</span><span class="vid">a0a9o4</span><span class="vtag">Busy on another task</span></div><div class="vtext">Abhi humare area me connection nahi lag pa rahe, line kaat rahe hain. Ladke usi me lage hue hain.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">SA Communication</span><span class="vid">a0a7e3</span><span class="vtag">Not installing now</span></div><div class="vtext">Jo booking aati hai, uske baare me pata hi nahi hota kitne ka plan hai, kitne ka connection hai, kya charges hain. Jab mai waha pahuchta hu toh customer mana kar deta hai &mdash; isliye ab naya connection le nahi pa raha hu.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Shaista</span><span class="vid">a0b5w1</span><span class="vtag">Do not recall</span></div><div class="vtext">Did not recall about this connection; said she is usually responsive.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Murtaza</span><span class="vid">a0b6b8</span><span class="vtag">Cherry-picking</span></div><div class="vtext">Mai address dekhta hu &mdash; jo lagana hota hai vo utha leta hu, nahi toh aise hi chhod deta hu. <em>(recorded on 3 separate bookings)</em></div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Kamal Bhardwaj</span><span class="vid">a0b6h7</span><span class="vtag">Decline option gap</span></div><div class="vtext">Ye address sahi nahi hai &mdash; K4 block hota hi nahi, K1/2 hota hai. Decline karte samay ye option nahi aata.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Chander Sheel Singh</span><span class="vid">a0b6b1</span><span class="vtag">Do not recall</span></div><div class="vtext">Did not recall about the connection.</div></div>
+    </div>
+  </details>
+
+  <!-- COHORT B -->
+  <h2><span class="tag tagB">Cohort B</span> Launched the app while the task was live &mdash; but never opened it</h2>
+  <p class="lead">The task was live on their phone and they <b>did open the app during that window</b> &mdash; yet never opened the task itself. The reasons skew toward <b>hard blockers and capability</b>, not choice.</p>
+  <div class="cards">
+    <div class="kpi"><div class="n">19</div><div class="l">calls attempted</div></div>
+    <div class="kpi"><div class="n">15</div><div class="l">distinct CSPs</div></div>
+    <div class="kpi"><div class="n">10</div><div class="l">connected</div></div>
+    <div class="kpi"><div class="n">5</div><div class="l">not reachable</div></div>
+  </div>
+  <table>
+    <thead><tr><th>Reason (tag)</th><th style="width:45%">Frequency</th><th>Count</th></tr></thead>
+    <tbody>
+      <tr><td>No router in hand</td><td><span class="bar" style="width:120px"></span></td><td class="cnt">3</td></tr>
+      <tr><td>Cherry-picking (no line / no power / not my area)</td><td><span class="bar" style="width:120px"></span></td><td class="cnt">3</td></tr>
+      <tr><td>Could not recall</td><td><span class="bar" style="width:40px"></span></td><td class="cnt">1</td></tr>
+      <tr><td>Booking reappeared after cancel, so ignored</td><td><span class="bar" style="width:40px"></span></td><td class="cnt">1</td></tr>
+      <tr><td>Education &mdash; doesn't understand the app</td><td><span class="bar" style="width:40px"></span></td><td class="cnt">1</td></tr>
+      <tr><td>Couldn't find the cancel button</td><td><span class="bar" style="width:40px"></span></td><td class="cnt">1</td></tr>
+    </tbody>
+  </table>
+  <div class="quote"><span class="who">Dinesh Kumar (onboarding gap)</span>"I've used the app a month &mdash; I don't understand what to do, which ticket is install vs service. Send someone to show me."</div>
+  <div class="quote"><span class="who">P Gopalkrishan</span>"No line of mine in I-block, so I didn't pick it. Saw the address and ignored it."</div>
+  <div class="quote"><span class="who">O P Yadav (cancel UX)</span>"This booking isn't in my area. I was looking for the cancel option but couldn't find how &mdash; so I left it and it auto-cancelled."</div>
+
+  <details class="log">
+    <summary>See all Cohort B verbatims <span class="badge">10 calls</span></summary>
+    <div class="vlist">
+      <div class="vitem"><div class="vhead"><span class="vname">Mahadev</span><span class="vid">a0b6o2</span><span class="vtag">No router</span></div><div class="vtext">Router nhi hai mere paas.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Jitender</span><span class="vid">a0b6h3</span><span class="vtag">No router</span></div><div class="vtext">Router nhi hai mere paas.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Mohd Irshad</span><span class="vid">a0b6x5</span><span class="vtag">No router</span></div><div class="vtext">Maine connection dekhi thi, lekin tum log mera ratio kharaab kar doge. Router nahi hai mere paas &mdash; jo pick ho ke aa rahe the, vo laga diye maine.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Support</span><span class="vid">a0b7g1</span><span class="vtag">Could not recall</span></div><div class="vtext">Could not recall.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">CSP (87005…)</span><span class="vid">a0b8y0</span><span class="vtag">Booking looped back</span></div><div class="vtext">Ye booking maine ek baar cancel ki hai, phir bhi wapis aa rahi hai &mdash; isliye pick nahi kiya.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">P Gopalkrishan</span><span class="vid">a0b6j7</span><span class="vtag">Cherry-picking</span></div><div class="vtext">Waha line nahi hai meri, I-block me. Isliye nahi pick kari &mdash; address dekh liya tha toh ignore kar diya.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Sunny</span><span class="vid">a0b6r4</span><span class="vtag">Cherry-picking</span></div><div class="vtext">Uss area me line nahi hai meri. Mai wahi pick karta hu jo booking lag pati hai.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">CSP (99901…)</span><span class="vid">a0b5y9</span><span class="vtag">Cherry-picking</span></div><div class="vtext">Uss area me power nahi hai, isliye pick nahi kiya.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">Dinesh Kumar</span><span class="vid">a0b9l3</span><span class="vtag">Education issue</span></div><div class="vtext">Mai 1 mahine se app use kar raha hu. Mujhe pata hi nahi chalta isme kya karna hota hai &mdash; kaun si installation ki ticket hai, kaun si service ki. Samajh nahi aata. Kisi se bolke visit karwa do mere yaha.</div></div>
+      <div class="vitem"><div class="vhead"><span class="vname">O P Yadav</span><span class="vid">a0b7f2</span><span class="vtag">Cancel button not found</span></div><div class="vtext">Ye booking mere area ki nahi hai. Mai cancel karne ka option dhundh raha tha but mila nahi kaise karna hai &mdash; toh chhod diya, apne aap cancel ho gya.</div></div>
+    </div>
+  </details>
+
+  <!-- CROSS-CUTTING -->
+  <h2>The cross-cutting story</h2>
+  <p class="lead">Whether they open the task or not, the mental model is the same: <b>"Is this in my serviceable area / worth my time?"</b> If not, partners silently ignore it &mdash; confident it will re-route back to them.</p>
+  <div class="themes">
+    <div class="theme"><h3><span class="dot" style="background:var(--danger)"></span>1. Serviceability mismatch</h3><p>Leads routed to partners with no line, no power or no coverage at that address. The single largest theme across both cohorts.</p></div>
+    <div class="theme"><h3><span class="dot" style="background:var(--warn)"></span>2. Router / inventory gaps</h3><p>Enrolled partners who physically can't install right now for lack of a router. Strongest signal in Cohort B.</p></div>
+    <div class="theme"><h3><span class="dot" style="background:var(--accent)"></span>3. Looping bookings + weak decline/cancel UX</h3><p>The same booking recirculates; partners can't find cancel, decline options don't fit "wrong address", and cancelled leads reappear. This trains partners to ignore rather than act.</p></div>
+    <div class="theme"><h3><span class="dot" style="background:var(--accent2)"></span>4. Pricing / deposit blindness at the door</h3><p>Partners don't know the plan price, charges or security fee until they reach the customer &mdash; who then refuses. Causes drops even when the partner did try.</p></div>
+  </div>
+
+  <!-- DIFFERENCE -->
+  <h2>What separates the two cohorts</h2>
+  <div class="split">
+    <div class="a"><h4>Cohort A &mdash; deliberate choice</h4><p>Mostly a decision made <b>after reviewing</b> the lead: cherry-pick, don't recall, busy, feels no urgency because it loops back. Needs better lead-matching and urgency mechanics.</p></div>
+    <div class="b"><h4>Cohort B &mdash; structural inability</h4><p>Mostly <b>can't act</b>: no router, no coverage, doesn't understand the app. Needs inventory support, serviceability filtering and onboarding.</p></div>
+  </div>
+
+  <!-- RECS -->
+  <h2>Recommended actions</h2>
+  <ol class="recs">
+    <li><b>Solve the routing problem.</b> CSPs should only receive serviceable bookings &mdash; leads in their actual coverage area. Otherwise they simply don't respond.</li>
+    <li><b>Fix the decline/cancel flow.</b> Add a "wrong address / not my area" decline reason and make the cancel button findable; stop cancelled bookings from re-looping unchanged.</li>
+    <li><b>Bring a router-ordering flow live on the CSP app.</b> Let partners order/re-stock routers in-app so a missing router no longer blocks installs.</li>
+    <li><b>Hand-hold CSPs who don't understand the app.</b> Ops-led support for partners who can't yet navigate the app or tell install vs service tickets apart.</li>
+  </ol>
+
+  <footer>
+    Prepared from <b>CSP Unresponsive Data (1).xlsx</b> &middot; Sheets: "opened task page" &amp; "using app but did not open task" &middot;
+    Scope limited to MG-enrolled CSPs with Caller = Ashish Raj &middot; Counts reflect connected calls with recorded tags/verbatims.
+  </footer>
+</div>
+</body>
+</html>
